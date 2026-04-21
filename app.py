@@ -1,7 +1,6 @@
 from flask import Flask, jsonify,request
 import os
-from google.cloud import storage
-
+from google.cloud import storage,bigquery
 
 app = Flask(__name__)
 
@@ -32,6 +31,22 @@ def get_files():
             "prefix": prefix,
             "count": len(items),
             "items": items
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.get("/bq")
+def run_bq():
+    sql = "select * from dados_financeiros.TB_T_ATIVOS"
+
+    try:
+        client = bigquery.Client()
+        job = client.query(sql)
+        rows = [dict(r.items()) for r in job.result()]
+        return jsonify({
+            "query": sql,
+            "count": len(rows),
+            "rows": rows
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
